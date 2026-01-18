@@ -3,13 +3,13 @@ use std::str::FromStr;
 
 fn main() -> Result<(), String> {
     let server_addr = std::env::args().nth(1).ok_or(
-        "Server bind address missing. Expected: `./client SERVER_ADDRESS:SERVER_PORT CLIENT_ADDRESS:CLIENT_PORT 128BIT_UUID_TOKEN".to_string(),
+        "Server bind address missing. Expected: ./client SERVER_ADDRESS:SERVER_PORT CLIENT_ADDRESS:CLIENT_PORT 32BYTE_TOKEN".to_string(),
     )?;
     let client_addr = std::env::args().nth(2).ok_or(
-        "Client bind address missing. Expected: `./client SERVER_ADDRESS:SERVER_PORT CLIENT_ADDRESS:CLIENT_PORT 128BIT_UUID_TOKEN".to_string(),
+        "Client bind address missing. Expected: ./client SERVER_ADDRESS:SERVER_PORT CLIENT_ADDRESS:CLIENT_PORT 32BYTE_TOKEN".to_string(),
     )?;
     let token = std::env::args().nth(3).ok_or(
-        "Token missing. Expected: `./client SERVER_ADDRESS:SERVER_PORT CLIENT_ADDRESS:CLIENT_PORT 128BIT_UUID_TOKEN".to_string(),
+        "Token missing. Expected: ./client SERVER_ADDRESS:SERVER_PORT CLIENT_ADDRESS:CLIENT_PORT 32BYTE_TOKEN".to_string(),
     )?;
 
     let listener = UdpSocket::bind(&client_addr)

@@ -3,14 +3,14 @@ use std::net::SocketAddr;
 use std::sync::LazyLock;
 use tokio::net::UdpSocket;
 
-const IDENTIFIER_LENGTH: usize = 32; // UUID is 32 bytes length
+const IDENTIFIER_LENGTH: usize = 32;
 static CONNECTION_INFO: LazyLock<DashMap<[u8; IDENTIFIER_LENGTH], SocketAddr>> =
     LazyLock::new(DashMap::new);
 
 #[tokio::main]
 async fn main() -> Result<(), String> {
     let bind_addr = std::env::args().nth(1).ok_or(
-        "Server bind address missing. Expected: `./server BIND_ADDRESS:BIND_PORT".to_string(),
+        "Server bind address missing. Expected: ./server BIND_ADDRESS:BIND_PORT".to_string(),
     )?;
 
     let listener = UdpSocket::bind(&bind_addr)
