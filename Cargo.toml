@@ -4,9 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-tokio = { version = "1.49.0", features = ["full", "rt-multi-thread"] }
+tokio = { version = "1.49.0", features = ["rt-multi-thread", "net", "macros"] }
 dashmap = "6.1.0"
-
 
 [[bin]]
 name = "server"
@@ -15,3 +14,7 @@ path = "src/server.rs"
 [[bin]]
 name = "client"
 path = "src/client.rs"
+
+[profile.release]
+strip = true
+debug = false
