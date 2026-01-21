@@ -1,5 +1,11 @@
 use std::net::{SocketAddr, UdpSocket};
 use std::str::FromStr;
+use std::sync::Arc;
+use std::sync::mpsc::{self, Sender};
+use std::thread::JoinHandle;
+use std::time::Duration;
+
+const HELLO_MESSAGE: &[u8] = b"HELLO";
 
 fn main() -> Result<(), String> {
     let server_addr = std::env::args().nth(1).ok_or(
@@ -39,10 +45,63 @@ fn main() -> Result<(), String> {
             &socket_addr_data[1..received_len]
         )
     })?;
-    let socket_addr = SocketAddr::from_str(socket_addr_str)
+    let other_peer = SocketAddr::from_str(socket_addr_str)
         .map_err(|error| format!("Failed to parse socket addr {socket_addr_str}: {error}."))?;
 
-    println!("Received peer address: {socket_addr}");
+    let listener = Arc::new(listener);
+
+    establish_connection(listener, other_peer)?;
+
+    println!("Received peer address and successfuly established connection: {other_peer}");
 
     Ok(())
+}
+
+fn establish_connection(listener: Arc<UdpSocket>, other_peer: SocketAddr) -> Result<(), String> {
+    let (ping_sender, ping_handle) = spawn_hello_ping(Arc::clone(&listener), other_peer);
+
+    listener
+        .set_read_timeout(Some(Duration::from_millis(100)))
+        .unwrap();
+
+    let mut hello_msg = [0u8; 50];
+    for _ in 0..10 {
+        let (length, addr) = listener
+            .recv_from(&mut hello_msg)
+            .map_err(|error| format!("Failed to receive data from: {other_peer}: {error}"))?;
+
+        if length == HELLO_MESSAGE.len()
+            && &hello_msg[..length] == HELLO_MESSAGE
+            && addr == other_peer
+        {
+            // established connection
+            ping_sender.send(true).unwrap();
+            break;
+        }
+    }
+    ping_handle
+        .join()
+        .map_err(|error| format!("Could not finish thread: {error:?}"))
+}
+
+fn spawn_hello_ping(
+    listener: Arc<UdpSocket>,
+    socket_addr: SocketAddr,
+) -> (Sender<bool>, JoinHandle<()>) {
+    let (sender, receiver) = mpsc::channel();
+
+    (
+        sender,
+        std::thread::spawn(move || {
+            loop {
+                if let Ok(msg) = receiver.try_recv()
+                    && msg
+                {
+                    break;
+                }
+                listener.send_to(HELLO_MESSAGE, socket_addr).unwrap();
+                std::thread::sleep(Duration::from_millis(100));
+            }
+        }),
+    )
 }
